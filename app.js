@@ -3,6 +3,10 @@ import UserRoutes from "./routes/users.js";
 const app = express();
 
 app.use(json());
+
+app.get("/", (req, res) =>{
+  res.redirect("/users")
+})
 app.use("/users", UserRoutes);
 
 let PORT = process.env.PORT || 3000;

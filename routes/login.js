@@ -27,4 +27,6 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.post("/password-reset");
+
 export default router;

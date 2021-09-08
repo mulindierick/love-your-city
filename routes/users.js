@@ -16,7 +16,7 @@ router.get("/", validToken, (req, res) => {
 //create a user
 router.post("/", async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);  
     await pool.query(
       "insert into users(username, password, email) values($1, $2, $3)",
       [req.body.name, hashedPassword, req.body.email]

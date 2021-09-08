@@ -11,13 +11,17 @@ router.get("/", (req, res) => {
     .catch((err) => console.log(err));
 });
 
-router.post("/", (req, res) => {
-  let { name, password, email } = req.body;
-  let q = "insert into users(username, password, email) values($1, $2, $3)";
-  pool
-    .query(q, [name, password, email])
-    .then((data) => res.json({ msg: "user created" }))
-    .catch((e) => console.log(e));
+router.post("/", async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    await pool.query(
+      "insert into users(username, password, email) values($1, $2, $3)",
+      [req.body.name, hashedPassword, req.body.email]
+    );
+    res.json({ msg: "user created" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

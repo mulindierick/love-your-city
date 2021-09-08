@@ -1,9 +1,11 @@
 import express from "express";
 import pool from "../db.js";
 import bcrypt from "bcrypt";
+import { validToken } from "../middleware/validate.js";
 const router = express.Router();
 
-router.get("/", (req, res) => {
+// get all users from the database
+router.get("/", validToken, (req, res) => {
   let q = "select * from users";
   pool
     .query(q)
@@ -11,6 +13,7 @@ router.get("/", (req, res) => {
     .catch((err) => console.log(err));
 });
 
+//create a user
 router.post("/", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);

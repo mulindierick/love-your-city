@@ -39,7 +39,6 @@ router.get("/:id", validToken, async (req, res) => {
     } else {
       return res.json({ msg: "Please login" });
     }
-    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

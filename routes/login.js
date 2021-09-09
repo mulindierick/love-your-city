@@ -27,6 +27,11 @@ router.post("/", async (req, res) => {
   }
 });
 
+// update password.
+// enter email so we can check that your account exists
+// after we email you a route where you can click to update your password. 
+
+
 router.post("/password-reset");
 
 export default router;

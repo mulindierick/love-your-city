@@ -1,6 +1,7 @@
 import express, { json } from "express";
 import loginRoutes from "./routes/login.js";
 import UserRoutes from "./routes/users.js";
+import campaignRoutes from "./routes/campaigns.js";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.get("/", (req, res) => {
 });
 app.use("/users", UserRoutes);
 app.use("/login", loginRoutes);
+app.use("/campaigns", campaignRoutes);
 
 let PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>

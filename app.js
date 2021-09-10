@@ -1,10 +1,18 @@
 import express, { json } from "express";
 import loginRoutes from "./routes/login.js";
+import cors from "cors";
 import UserRoutes from "./routes/users.js";
 import campaignRoutes from "./routes/campaigns.js";
 
 const app = express();
 
+const corsOptions = {
+  credentials: true,
+  origin: process.env.URL || "https://love-your-city-app.herokuapp.com",
+};
+
+app.use(cors(corsOptions));
+app.use(urlencoded({ extended: false }));
 app.use(json());
 
 app.get("/", (req, res) => {

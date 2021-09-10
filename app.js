@@ -13,7 +13,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(json());
-// app.use(urlencoded({ extended: false }));
 
 app.get("/", (req, res) => {
   res.redirect("/users");

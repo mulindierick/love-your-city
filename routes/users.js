@@ -5,8 +5,7 @@ import { validToken } from "../middleware/validate.js";
 const router = express.Router();
 
 // get all users from the database
-router.get("/", validToken, (req, res) => {
-  console.log(req.user, req.user.user_id);
+router.get("/", (req, res) => {
   let q = "select * from users";
   pool
     .query(q)

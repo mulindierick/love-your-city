@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.js";
 import bcrypt from "bcrypt";
+import { token } from "../token.js";
 import { validToken } from "../middleware/validate.js";
 const router = express.Router();
 
@@ -17,11 +18,11 @@ router.get("/", (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    await pool.query(
-      "insert into users(username, password, email) values($1, $2, $3)",
+    let newUser = await pool.query(
+      "insert into users(username, password, email) values($1, $2, $3) RETURNING *",
       [req.body.name, hashedPassword, req.body.email]
     );
-    res.json({ msg: "user created" });
+    res.status(200).json(token(newUser.rows[0]));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

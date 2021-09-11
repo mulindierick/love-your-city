@@ -8,7 +8,7 @@ const app = express();
 
 const corsOptions = {
   credentials: true,
-  origin: process.env.URL || "https://love-your-city-app.herokuapp.com",
+  origin: process.env.URL || "*",
 };
 
 app.use(cors(corsOptions));

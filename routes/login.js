@@ -21,7 +21,10 @@ router.post("/", async (req, res) => {
       return res.json({ msg: "Password not correct" });
     }
     // if both password and email are correct send validation token
-    res.json(token(user.rows[0]));
+    res.json({
+      token: token(user.rows[0]),
+      user: user.rows[0]
+    });
   } catch (error) {
     res.json({ error: error.message });
   }

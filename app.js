@@ -6,6 +6,7 @@ import campaignRoutes from "./routes/campaigns.js";
 
 const app = express();
 
+// handle cors errors
 const corsOptions = {
   credentials: true,
   origin: process.env.URL || "*",

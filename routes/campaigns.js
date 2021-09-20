@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post("/", validToken, async (req, res) => {
   try {
-      console.log(req.user)
+    console.log(req.user);
     await pool.query(
       "insert into campaigns(campaign_owner_id, campaign_title, campaign_desc) values($1, $2, $3)",
       [req.user.user_id, req.body.title, req.body.desc]
@@ -31,6 +31,7 @@ router.get("/:id", validToken, async (req, res) => {
   }
 });
 
+
 //donate to a campaign
 router.post("/:id", validToken, async (req, res) => {
   try {
@@ -40,10 +41,13 @@ router.post("/:id", validToken, async (req, res) => {
     if (campaign.rows.length === 0) {
       return res.json({ msg: "Campaign not found" });
     }
-    await pool.query(
-      "insert into donations (donation_owner_id, campaign_id, item_name, item_quanity) values($1, $2, $3, $4)",
-      [req.user.user_id, req.params.id, req.body.name, req.body.quantity]
-    );
+    console.log(req.body)
+    await req.body.forEach((donation) => {
+      pool.query(
+        "insert into donations (donation_owner_id, campaign_id, item_name, item_quanity) values($1, $2, $3, $4)",
+        [req.user.user_id, req.params.id, donation.name, donation.quantity]
+      );
+    });
     res.json({ msg: "Thank you for donating" });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -5,17 +5,39 @@ import express from "express";
 const router = express.Router();
 
 //create campaign
-
+//  validToken,
 router.post("/", validToken, async (req, res) => {
+  console.log(req.body)
+  const { userId, campName, campDesc, campType, returnedEndDate, initialNumItems, campaignItems } = req.body
+
+  const client = await pool.connect()
+
   try {
-      console.log(req.user)
-    await pool.query(
-      "insert into campaigns(campaign_owner_id, campaign_title, campaign_desc) values($1, $2, $3)",
-      [req.user.user_id, req.body.title, req.body.desc]
+    await client.query('BEGIN')
+    await client.query(
+      "insert into campaigns(campaign_owner_id, campaign_title, campaign_desc, campaign_type, end_date, required_item_total) values($1, $2, $3, $4, $5, $6) RETURNING campaign_id"
+      [userId, campName, campDesc, campType, returnedEndDate, initialNumItems],
+      (err, res) => {
+        console.log(res)
+        const campId = res.rows[0]
+      }
     );
-    res.json({ msg: "campaign created" });
-  } catch (error) {
+
+    for await (item of campaignItems) {
+      client.query(
+        'INSERT INTO campaign_items(campaign_id, campaign_item_name, campaign_item_quantity) VALUES ($1, $2, $3)',
+        [campId, item.name, item.quantity]
+      )
+    }
+
+    await client.query('COMMIT')
+    res.status(200).json({ msg: "campaign created" });
+  } catch (e) {
+    await client.query('ROLLBACK')
+    throw e
     res.status(500).json({ error: error.message });
+  } finally {
+    client.release()
   }
 });
 

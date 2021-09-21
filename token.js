@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 function token({ user_id, username, email }) {
   const user = { user_id, username, email };

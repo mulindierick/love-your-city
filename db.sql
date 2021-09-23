@@ -70,12 +70,13 @@ ALTER TABLE public.donations ADD CONSTRAINT donation_id_fkey FOREIGN KEY (donati
 
 CREATE TABLE campaign_items (
 	campaign_item_id serial NOT NULL,
-	campaign_id uuid NOT NULL,
+	campaign_id uuid NOT NULL, 
 	campaign_item_name text NOT NULL,
 	campaign_item_quanity int4 NOT NULL,
 	created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT campaign_items_pkey PRIMARY KEY (campaign_item_id)
 );
+
 
 
 -- public.campaign_items foreign keys

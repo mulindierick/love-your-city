@@ -30,17 +30,49 @@ router.post("/", async (req, res) => {
 
 // campaigns a user created
 router.get("/:id", validToken, async (req, res) => {
+  const client = await pool.connect()
+
   try {
     if (req.params.id === req.user.user_id) {
-      let campaigns = await pool.query(
+      await pool.query('BEGIN')
+
+      const dataCamp = await pool.query(
         `select * from campaigns where campaign_owner_id = '${req.params.id}'`
       );
-      res.json(campaigns.rows);
+      const campaigns = await dataCamp.rows
+
+      const dataItems = await pool.query(
+        `select * from campaign_items`
+      );
+      const campaignItems = dataItems.rows
+
+      const dataDonations = await pool.query(
+        `select * from donations`
+      );
+      const campaignDonations = dataDonations.rows
+      
+      campaigns.forEach((camp) => {
+        const { campaign_id: id } = camp
+
+        let specificItems = campaignItems.filter(el => el.campaign_id === id)
+        let specificDonations = campaignDonations.filter(el => el.campaign_id === id)
+
+        camp["campaign_items"] = specificItems
+        camp["campaign_donations"] = specificDonations
+      })
+
+      console.log(campaigns)
+      res.json(campaigns);
+
     } else {
       return res.json({ msg: "Please login" });
     }
   } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
     res.status(500).json({ error: error.message });
+  } finally {
+    client.release()
   }
 });
 

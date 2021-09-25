@@ -58,7 +58,7 @@ router.post("/", validToken, async (req, res) => {
 });
 
 // get one campaign by id -- read campaign details
-router.get("/:id", validToken, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     let campaign = await pool.query(
       `select * from campaigns 
@@ -74,16 +74,21 @@ router.get("/:id", validToken, async (req, res) => {
       where campaigns.campaign_id = '${req.params.id}'
       group by donations.item_name
       ORDER BY donations.item_name ASC`
-      
     );
-    res.json({ campaign: campaign.rows, donations: donations.rows });
+    let user = await pool.query(
+      `select * from users 
+      inner join campaigns
+      on campaigns.campaign_owner_id = users.user_id
+      where campaigns.campaign_id = '${req.params.id}'`
+    );
+    res.json({ campaign: campaign.rows, donations: donations.rows, user: user.rows });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // get campaign items for you to make a donation
-router.get("/items/:id", validToken, async (req, res) => {
+router.get("/items/:id", async (req, res) => {
   try {
     let campaign = await pool.query(
       `select campaign_items.campaign_item_name, campaign_items.campaign_item_quantity from campaigns 

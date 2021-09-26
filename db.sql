@@ -80,5 +80,4 @@ CREATE TABLE campaign_items (
 
 
 -- public.campaign_items foreign keys
-
 ALTER TABLE public.campaign_items ADD CONSTRAINT campaign_items_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES campaigns(campaign_id);

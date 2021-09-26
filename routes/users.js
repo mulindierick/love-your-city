@@ -30,50 +30,92 @@ router.post("/", async (req, res) => {
 
 // campaigns a user created
 router.get("/:id", validToken, async (req, res) => {
-  const client = await pool.connect()
+  //campaing
+  // campaing items
+  // cmapaign donations total
 
   try {
-    if (req.params.id === req.user.user_id) {
-      await pool.query('BEGIN')
+    let campaigns = await pool.query(
+      `select campaigns.campaign_title, campaigns.campaign_type, campaigns.campaign_desc, campaigns.delivery_address,
+      campaigns.end_date
+      from campaigns where campaigns.campaign_owner_id = '${req.params.id}'
+      ORDER BY campaigns.campaign_title ASC`
+    );
+    let item_total = await pool.query(
+      `select campaigns.campaign_title, sum(campaign_items.campaign_item_quantity) as total from campaigns 
+        inner join campaign_items
+        on campaigns.campaign_id = campaign_items.campaign_id 
+        where campaigns.campaign_owner_id = '${req.params.id}'
+        group by campaigns.campaign_title
+        ORDER BY campaigns.campaign_title ASC
+        `
+    );
+    let campaign_items = await pool.query(
+      `select campaigns.campaign_title, campaign_items.campaign_item_name, campaign_items.campaign_item_quantity from campaigns 
+      inner join campaign_items
+      on campaigns.campaign_id = campaign_items.campaign_id 
+      where campaigns.campaign_owner_id = '${req.params.id}'
+      ORDER BY campaigns.campaign_title ASC `
+    );
+    let donations_total = await pool.query(`
+      select campaigns.campaign_title, sum(donations.item_quantity) as total from campaigns 
+      inner join donations
+      on campaigns.campaign_id = donations.campaign_id
+      where campaigns.campaign_owner_id = '${req.params.id}'
+      group by campaigns.campaign_title
+      ORDER BY campaigns.campaign_title asc`);
 
-      const dataCamp = await pool.query(
-        `select * from campaigns where campaign_owner_id = '${req.params.id}'`
-      );
-      const campaigns = await dataCamp.rows
-
-      const dataItems = await pool.query(
-        `select * from campaign_items`
-      );
-      const campaignItems = dataItems.rows
-
-      const dataDonations = await pool.query(
-        `select * from donations`
-      );
-      const campaignDonations = dataDonations.rows
-      
-      campaigns.forEach((camp) => {
-        const { campaign_id: id } = camp
-
-        let specificItems = campaignItems.filter(el => el.campaign_id === id)
-        let specificDonations = campaignDonations.filter(el => el.campaign_id === id)
-
-        camp["campaign_items"] = specificItems
-        camp["campaign_donations"] = specificDonations
-      })
-
-      console.log(campaigns)
-      res.json(campaigns);
-
-    } else {
-      return res.json({ msg: "Please login" });
-    }
+    res.json({
+      campaigns: campaigns.rows,
+      item_total: item_total.rows,
+      campaign_items: campaign_items.rows,
+      donations_total: donations_total.rows
+    });
   } catch (error) {
-    await client.query('ROLLBACK')
-    throw error
     res.status(500).json({ error: error.message });
-  } finally {
-    client.release()
   }
 });
+
+// const client = await pool.connect();
+
+// try {
+//   if (req.params.id === req.user.user_id) {
+//     await pool.query("BEGIN");
+
+//     const dataCamp = await pool.query(
+//       `select * from campaigns where campaign_owner_id = '${req.params.id}'`
+//     );
+//     const campaigns = await dataCamp.rows;
+
+//     const dataItems = await pool.query(`select * from campaign_items`);
+//     const campaignItems = dataItems.rows;
+
+//     const dataDonations = await pool.query(`select * from donations`);
+//     const campaignDonations = dataDonations.rows;
+
+//     campaigns.forEach((camp) => {
+//       const { campaign_id: id } = camp;
+
+//       let specificItems = campaignItems.filter((el) => el.campaign_id === id);
+//       let specificDonations = campaignDonations.filter(
+//         (el) => el.campaign_id === id
+//       );
+
+//       camp["campaign_items"] = specificItems;
+//       camp["campaign_donations"] = specificDonations;
+//     });
+
+//     console.log(campaigns);
+//     res.json(campaigns);
+//   } else {
+//     return res.json({ msg: "Please login" });
+//   }
+// } catch (error) {
+//   await client.query("ROLLBACK");
+//   throw error;
+//   res.status(500).json({ error: error.message });
+// } finally {
+//   client.release();
+// }
 
 export default router;

@@ -76,7 +76,7 @@ router.get("/:id", async (req, res) => {
       ORDER BY donations.item_name ASC`
     );
     let user = await pool.query(
-      `select * from users 
+      `select * from users
       inner join campaigns
       on campaigns.campaign_owner_id = users.user_id
       where campaigns.campaign_id = '${req.params.id}'`

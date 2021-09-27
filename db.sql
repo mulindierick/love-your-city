@@ -51,7 +51,7 @@ CREATE TABLE donations (
 	donation_owner_id uuid NULL,
 	campaign_id uuid NULL,
 	item_name text NOT NULL,
-	item_quanity int4 NOT NULL,
+	item_quantity int4 NOT NULL,
 	created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT donation_pkey PRIMARY KEY (donation_id)
 );
@@ -80,4 +80,4 @@ CREATE TABLE campaign_items (
 
 
 -- public.campaign_items foreign keys
-ALTER TABLE public.campaign_items ADD CONSTRAINT campaign_items_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES campaigns(campaign_id);
+ALTER TABLE public.campaign_items ADD CONSTRAINT campaign_items_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES campaigns(campaign_id) ON DELETE CASCADE;

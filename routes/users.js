@@ -30,10 +30,6 @@ router.post("/", async (req, res) => {
 
 // campaigns a user created
 router.get("/:id", validToken, async (req, res) => {
-  //campaing
-  // campaing items
-  // cmapaign donations total
-
   try {
     let campaigns = await pool.query(
       `select campaigns.campaign_title, campaigns.campaign_type, campaigns.campaign_desc, campaigns.delivery_address,
@@ -64,12 +60,18 @@ router.get("/:id", validToken, async (req, res) => {
       where campaigns.campaign_owner_id = '${req.params.id}'
       group by campaigns.campaign_title
       ORDER BY campaigns.campaign_title asc`);
-
+    let donation_items = await pool.query(`
+    select campaigns.campaign_title, donations.item_name, donations.item_quantity from campaigns 
+      inner join donations
+      on campaigns.campaign_id = donations.campaign_id 
+      where campaigns.campaign_owner_id = '${req.params.id}'
+      ORDER BY campaigns.campaign_title ASC `)
     res.json({
       campaigns: campaigns.rows,
       item_total: item_total.rows,
       campaign_items: campaign_items.rows,
-      donations_total: donations_total.rows
+      donations_total: donations_total.rows,
+      donation_items: donation_items.rows
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

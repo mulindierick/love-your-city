@@ -33,8 +33,13 @@ router.get("/:id", validToken, async (req, res) => {
   try {
     let campaigns = await pool.query(
       `select campaigns.campaign_title, campaigns.campaign_type, campaigns.campaign_desc, campaigns.delivery_address,
-      campaigns.end_date
-      from campaigns where campaigns.campaign_owner_id = '${req.params.id}'
+      campaigns.end_date,
+      campaigns.campaign_id,
+      users.email
+      from campaigns
+      inner join users
+      on campaigns.campaign_owner_id = users.user_id
+      where campaigns.campaign_owner_id = '${req.params.id}'
       ORDER BY campaigns.campaign_title ASC`
     );
     let item_total = await pool.query(

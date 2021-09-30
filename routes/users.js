@@ -66,7 +66,7 @@ router.get("/:id", validToken, async (req, res) => {
       group by campaigns.campaign_title
       ORDER BY campaigns.campaign_title asc`);
     let donation_items = await pool.query(`
-    select campaigns.campaign_title, donations.item_name, donations.item_quantity from campaigns 
+    select campaigns.campaign_title, donations.item_name, donations.donation_owner_id, donations.item_quantity,   donations.created_at from campaigns 
       inner join donations
       on campaigns.campaign_id = donations.campaign_id 
       where campaigns.campaign_owner_id = '${req.params.id}'

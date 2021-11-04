@@ -111,7 +111,7 @@ router.get("/items/:id", async (req, res) => {
 });
 
 //donate to a campaign
-router.post("/:id", validToken, async (req, res) => {
+router.post("/:id", async (req, res) => {
   try {
     let campaign = await pool.query(
       `select * from campaigns where campaign_id = '${req.params.id}'`
@@ -121,19 +121,23 @@ router.post("/:id", validToken, async (req, res) => {
     }
     console.log(req.body);
     await req.body.forEach((donation) => {
+      // donation_owner_id,
       pool.query(
-        "insert into donations (donation_owner_id, campaign_id, item_name, item_quantity) values($1, $2, $3, $4)",
+        "insert into donations (campaign_id, item_name, item_quantity, first_name, second_name, email) values($1, $2, $3, $4, $5, $6)",
         [
-          req.user.user_id,
+          // req.user.user_id,
           req.params.id,
           donation.campaign_item_name,
           donation.donation,
+          donation.firstName,
+          donation.secondName,
+          donation.email,
         ]
       );
     });
     res.json({ msg: "Thank you for donating" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ error: error.message });
   }
 });
 

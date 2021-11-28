@@ -2,6 +2,11 @@ import bcrypt from "bcrypt";
 import { token } from "../token.js";
 import express from "express";
 import pool from "../db.js";
+
+import { OAuth2Client } from "google-auth-library";
+const CLIENT_ID = process.env.CLIENT_ID;
+const client = new OAuth2Client(CLIENT_ID);
+
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -23,18 +28,36 @@ router.post("/", async (req, res) => {
     // if both password and email are correct send validation token
     res.json({
       token: token(user.rows[0]),
-      user: {user_id: user.rows[0].user_id}
+      user: { user_id: user.rows[0].user_id },
     });
   } catch (error) {
     res.json({ error: error.message });
   }
 });
 
-// update password.
-// enter email so we can check that your account exists
-// after we email you a route where you can click to update your password. 
+router.post("/google", async (req, res) => {
+  try {
+    const { googleToken } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: CLIENT_ID,
+    });
+    const { email } = ticket.getPayload();
 
+    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-router.post("/password-reset");
+    if (user.rows.length === 0) {
+      return res.json({ error: "some account details are not correct" });
+    }
+    res.json({
+      token: token(user.rows[0]),
+      user: { user_id: user.rows[0].user_id },
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
 
 export default router;

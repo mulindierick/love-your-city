@@ -3,6 +3,10 @@ import pool from "../db.js";
 import bcrypt from "bcrypt";
 import { token } from "../token.js";
 import { validToken } from "../middleware/validate.js";
+
+import { OAuth2Client } from "google-auth-library";
+const CLIENT_ID = process.env.CLIENT_ID;
+const client = new OAuth2Client(CLIENT_ID);
 const router = express.Router();
 
 // get all users from the database
@@ -17,12 +21,42 @@ router.get("/", (req, res) => {
 //create a user
 router.post("/", async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    let newUser = await pool.query(
-      "insert into users(username, password, email) values($1, $2, $3) RETURNING *",
-      [req.body.name, hashedPassword, req.body.email]
+    if (
+      req.body.name.length > 0 &&
+      req.body.email.length > 0 &&
+      req.body.password.length > 0
+    ) {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      let newUser = await pool.query(
+        "insert into users(username, password, email) values($1, $2, $3) RETURNING *",
+        [req.body.name, hashedPassword, req.body.email]
+      );
+      res.status(200).json(token(newUser.rows[0]));
+    } else {
+      res.status(200).json({ error: "some fields are empty" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//use google to create user
+router.post("/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,
+    });
+    const { family_name, given_name, email, picture } = ticket.getPayload();
+    const generatePassword = Math.random() + email;
+    const hashPassword = await bcrypt.hash(generatePassword, 10);
+
+    await pool.query(
+      "insert into users(username, password, email) values($1, $2, $3)",
+      [given_name, hashPassword, email]
     );
-    res.status(200).json(token(newUser.rows[0]));
+    res.status(200).json({ msg: "success" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,65 +100,23 @@ router.get("/:id", validToken, async (req, res) => {
       group by campaigns.campaign_title
       ORDER BY campaigns.campaign_title asc`);
 
-      // this query needs to change 
+    // this query needs to change
     let donation_items = await pool.query(`
     select campaigns.campaign_title, donations.item_name, donations.item_quantity, donations.created_at, donations.email, donations.first_name, donations.second_name from campaigns 
       inner join donations
       on campaigns.campaign_id = donations.campaign_id 
       where campaigns.campaign_owner_id = '${req.params.id}'
-      ORDER BY campaigns.campaign_title ASC `)
+      ORDER BY campaigns.campaign_title ASC `);
     res.json({
       campaigns: campaigns.rows,
       item_total: item_total.rows,
       campaign_items: campaign_items.rows,
       donations_total: donations_total.rows,
-      donation_items: donation_items.rows
+      donation_items: donation_items.rows,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-// const client = await pool.connect();
-
-// try {
-//   if (req.params.id === req.user.user_id) {
-//     await pool.query("BEGIN");
-
-//     const dataCamp = await pool.query(
-//       `select * from campaigns where campaign_owner_id = '${req.params.id}'`
-//     );
-//     const campaigns = await dataCamp.rows;
-
-//     const dataItems = await pool.query(`select * from campaign_items`);
-//     const campaignItems = dataItems.rows;
-
-//     const dataDonations = await pool.query(`select * from donations`);
-//     const campaignDonations = dataDonations.rows;
-
-//     campaigns.forEach((camp) => {
-//       const { campaign_id: id } = camp;
-
-//       let specificItems = campaignItems.filter((el) => el.campaign_id === id);
-//       let specificDonations = campaignDonations.filter(
-//         (el) => el.campaign_id === id
-//       );
-
-//       camp["campaign_items"] = specificItems;
-//       camp["campaign_donations"] = specificDonations;
-//     });
-
-//     console.log(campaigns);
-//     res.json(campaigns);
-//   } else {
-//     return res.json({ msg: "Please login" });
-//   }
-// } catch (error) {
-//   await client.query("ROLLBACK");
-//   throw error;
-//   res.status(500).json({ error: error.message });
-// } finally {
-//   client.release();
-// }
 
 export default router;

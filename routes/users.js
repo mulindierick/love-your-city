@@ -66,10 +66,11 @@ router.post("/google", async (req, res) => {
 router.get("/:id", validToken, async (req, res) => {
   try {
     let campaigns = await pool.query(
-      `select campaigns.campaign_title, campaigns.campaign_type, campaigns.campaign_desc, campaigns.delivery_address,
+      `select campaigns.campaign_title, campaigns.contact, campaigns.campaign_type, campaigns.campaign_desc, campaigns.delivery_address,
       campaigns.end_date,
       campaigns.campaign_id,
-      users.email
+      users.email,
+      users.username
       from campaigns
       inner join users
       on campaigns.campaign_owner_id = users.user_id

@@ -15,7 +15,7 @@ router.post("/", validToken, async (req, res) => {
     campType,
     returnedEndDate,
     deliveryAddress,
-    // initialNumItems,
+    contactNum,
     campaignItems,
   } = req.body;
 
@@ -25,9 +25,8 @@ router.post("/", validToken, async (req, res) => {
     await client.query("BEGIN");
 
     const campRes = await client.query(
-      "INSERT INTO campaigns(campaign_owner_id, campaign_title, campaign_desc, campaign_type, delivery_address, end_date) values ($1::uuid, $2,$3, $4, $5, $6) returning campaign_id",
-      // , $7
-      // required_item_total
+      "INSERT INTO campaigns(campaign_owner_id, campaign_title, campaign_desc, campaign_type, delivery_address, end_date, contact) values ($1::uuid, $2,$3, $4, $5, $6, $7) returning campaign_id",
+
       [
         userId,
         campName,
@@ -35,7 +34,7 @@ router.post("/", validToken, async (req, res) => {
         campType,
         deliveryAddress,
         returnedEndDate,
-        // initialNumItems,
+        contactNum,
       ]
     );
     const campId = await campRes.rows[0]["campaign_id"];
@@ -121,11 +120,9 @@ router.post("/:id", async (req, res) => {
     }
     console.log(req.body);
     await req.body.forEach((donation) => {
-      // donation_owner_id,
       pool.query(
         "insert into donations (campaign_id, item_name, item_quantity, first_name, second_name, email) values($1, $2, $3, $4, $5, $6)",
         [
-          // req.user.user_id,
           req.params.id,
           donation.campaign_item_name,
           donation.donation,

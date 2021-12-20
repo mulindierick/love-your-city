@@ -10,13 +10,13 @@ const client = new OAuth2Client(CLIENT_ID);
 const router = express.Router();
 
 // get all users from the database
-router.get("/", (req, res) => {
-  let q = "select * from users";
-  pool
-    .query(q)
-    .then((data) => res.json({ data: data.rows }))
-    .catch((err) => console.log(err));
-});
+// router.get("/", (req, res) => {
+//   let q = "select * from users";
+//   pool
+//     .query(q)
+//     .then((data) => res.json({ data: data.rows }))
+//     .catch((err) => console.log(err));
+// });
 
 //create a user
 router.post("/", async (req, res) => {
@@ -103,7 +103,7 @@ router.get("/:id", validToken, async (req, res) => {
 
     // this query needs to change
     let donation_items = await pool.query(`
-    select campaigns.campaign_title, donations.item_name, donations.item_quantity, donations.created_at, donations.email, donations.first_name, donations.second_name from campaigns 
+    select campaigns.campaign_title, donations.donation_id, donations.item_name, donations.item_quantity, coalesce(donations.donations_received, 0) as donations_received, donations.created_at, donations.email, donations.first_name, donations.second_name from campaigns 
       inner join donations
       on campaigns.campaign_id = donations.campaign_id 
       where campaigns.campaign_owner_id = '${req.params.id}'
@@ -120,4 +120,36 @@ router.get("/:id", validToken, async (req, res) => {
   }
 });
 
+// update received items
+router.patch("/received_donations", validToken, async (req, res) => {
+  try {
+    // console.log(req.user);
+    let donation = await pool.query(
+      `select * from donations where donation_id = '${req.body.donationId}'`
+    );
+    if (donation.rows.length === 0)
+      return res.json({ msg: "donation does not exist" });
+
+    if (donation.rows[0].campaign_id === req.body.campaignId) {
+      let updatedDonation = donation.rows[0].donations_received;
+      if (
+        donation.rows[0].donations_received + req.body.updatedDonationValue <=
+        donation.rows[0].item_quantity
+      ) {
+        updatedDonation += req.body.updatedDonationValue;
+      }
+      console.log(req.body.updatedDonationValue, updatedDonation);
+      await pool.query(
+        `update donations set donations_received = $1 where donation_id = '${req.body.donationId}'`,
+        [updatedDonation]
+      );
+
+      res.json({ receivedDonations: updatedDonation });
+    } else {
+      return res.json({ msg: "donation not found" });
+    }
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
 export default router;

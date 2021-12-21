@@ -122,7 +122,6 @@ router.get("/:id", validToken, async (req, res) => {
 
 // update received items
 router.patch("/received_donations", validToken, async (req, res) => {
-  console.log("body", req.body);
   const client = await pool.connect();
 
   try {
@@ -137,19 +136,16 @@ router.patch("/received_donations", validToken, async (req, res) => {
         return res.json({ msg: "donation does not exist" });
       if (donation.rows[0].campaign_id === req.body.campaignId) {
         let updatedDonation = donation.rows[0].donations_received;
-        console.log("one", updatedDonation);
         if (
           donation.rows[0].donations_received + item.updatedDonationValue <=
           donation.rows[0].item_quantity
         ) {
           updatedDonation += item.updatedDonationValue;
         }
-        console.log("two", item.updatedDonationValue, updatedDonation);
         await client.query(
           "update donations set donations_received = $1 where donation_id = $2",
           [updatedDonation, item.donationId]
         );
-        console.log("three", updatedDonation, item.donationId);
       } else {
         return res.json({ msg: "donation not found" });
       }

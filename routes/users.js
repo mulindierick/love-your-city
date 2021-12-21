@@ -122,34 +122,77 @@ router.get("/:id", validToken, async (req, res) => {
 
 // update received items
 router.patch("/received_donations", validToken, async (req, res) => {
-  try {
-    // console.log(req.user);
-    let donation = await pool.query(
-      `select * from donations where donation_id = '${req.body.donationId}'`
-    );
-    if (donation.rows.length === 0)
-      return res.json({ msg: "donation does not exist" });
+  console.log("body", req.body);
+  const client = await pool.connect();
 
-    if (donation.rows[0].campaign_id === req.body.campaignId) {
-      let updatedDonation = donation.rows[0].donations_received;
-      if (
-        donation.rows[0].donations_received + req.body.updatedDonationValue <=
-        donation.rows[0].item_quantity
-      ) {
-        updatedDonation += req.body.updatedDonationValue;
-      }
-      console.log(req.body.updatedDonationValue, updatedDonation);
-      await pool.query(
-        `update donations set donations_received = $1 where donation_id = '${req.body.donationId}'`,
-        [updatedDonation]
+  try {
+    await client.query("BEGIN");
+
+    for await (const item of req.body.donationUpdateState) {
+      let donation = await client.query(
+        `select * from donations where donation_id = '${item.donationId}'`
       );
 
-      res.json({ receivedDonations: updatedDonation });
-    } else {
-      return res.json({ msg: "donation not found" });
+      if (donation.rows.length === 0)
+        return res.json({ msg: "donation does not exist" });
+      if (donation.rows[0].campaign_id === req.body.campaignId) {
+        let updatedDonation = donation.rows[0].donations_received;
+        console.log("one", updatedDonation);
+        if (
+          donation.rows[0].donations_received + item.updatedDonationValue <=
+          donation.rows[0].item_quantity
+        ) {
+          updatedDonation += item.updatedDonationValue;
+        }
+        console.log("two", item.updatedDonationValue, updatedDonation);
+        await client.query(
+          "update donations set donations_received = $1 where donation_id = $2",
+          [updatedDonation, item.donationId]
+        );
+        console.log("three", updatedDonation, item.donationId);
+      } else {
+        return res.json({ msg: "donation not found" });
+      }
     }
-  } catch (error) {
-    res.json({ error: error.message });
+    await client.query("COMMIT");
+    res.status(200).json({ msg: "donation updated" });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
   }
 });
+
+//   try {
+//     // console.log(req.user);
+//     let donation = await pool.query(
+//       `select * from donations where donation_id = '${item.donationId}'`
+//     );
+//     if (donation.rows.length === 0)
+//       return res.json({ msg: "donation does not exist" });
+
+//     if (donation.rows[0].campaign_id === req.body.campaignId) {
+//       let updatedDonation = donation.rows[0].donations_received;
+//       if (
+//         donation.rows[0].donations_received + item.updatedDonationValue <=
+//         donation.rows[0].item_quantity
+//       ) {
+//         updatedDonation += item.updatedDonationValue;
+//       }
+//       console.log(item.updatedDonationValue, updatedDonation);
+//       await pool.query(
+//         `update donations set donations_received = $1 where donation_id = '${item.donationId}'`,
+//         [updatedDonation]
+//       );
+
+//       res.json({ receivedDonations: updatedDonation });
+//     } else {
+//       return res.json({ msg: "donation not found" });
+//     }
+//   } catch (error) {
+//     res.json({ error: error.message });
+//   }
+// });
+
 export default router;

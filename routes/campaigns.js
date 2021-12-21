@@ -52,7 +52,6 @@ router.post("/", validToken, async (req, res) => {
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
-    res.status(500).json({ error: error.message });
   } finally {
     client.release();
   }

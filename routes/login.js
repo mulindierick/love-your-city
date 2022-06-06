@@ -55,7 +55,7 @@ router.post("/google", async (req, res) => {
     ]);
 
     if (user.rows.length === 0) {
-      return res.json({ error: "some account details are incorrect" });
+      return res.json({ error: "some account details are not correct" });
     }
     res.json({
       token: token(user.rows[0]),
@@ -88,28 +88,26 @@ router.post("/psw-reset-url", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
-        user: "",
-        pass: "",
+        user: process.env.USER_EMAIL,
+        pass: process.env.USER_EMAIL_PSW,
       },
     });
 
     const options = {
-      from: "mulindi@coburwas.org",
-      to: "mulindierick@gmail.com",
+      from: process.env.FROM,
+      to: process.env.TO_EMAIL,
       subject: "LYC test",
       text: "it worked",
     };
 
     transporter.sendMail(options, function (error, res) {
-      if(error){
-        console.log(error.message)
-        return;
+      if (error) {
+        console.log({ eror: error.message });
+      } else {
+        console.log(res.response);
+        return res.json({ msg: "email sent" });
       }
-      console.log(res.response)
     });
-    res.json({msg: "email sent"})
-
-
   } catch (error) {
     res.json({ error: error.message });
   }
